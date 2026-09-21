@@ -10,7 +10,7 @@ public class QuickStart {
         var slave = demo.openDemoAccount("MetaQuotes-Demo", "Slave", "Follower", "slave@example.com", "MetaQuotes-Demo");
         System.out.println("Created accounts: Master=" + master.login + ", Slave=" + slave.login);
 
-        try (CopierService svc = new CopierService("copy.mrpc.pro:443", "YOUR_USER_KEY", "YOUR_MANAGER_KEY")) {
+        try (CopierService svc = new CopierService("copy.mrpc.pro:443", "YOUR_USER_KEY")) {
             Models.StartRequest req = new Models.StartRequest();
             req.master.user = master.login;
             req.master.password = master.password;

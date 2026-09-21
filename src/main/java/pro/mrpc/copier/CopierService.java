@@ -7,6 +7,10 @@ public class CopierService implements AutoCloseable {
     private final String userKey;
     private final String managerKey;
 
+    public CopierService(String endpoint, String userKey) {
+        this(endpoint, userKey, userKey);
+    }
+
     public CopierService(String endpoint, String userKey, String managerKey) {
         this.endpoint = endpoint;
         this.userKey = userKey;

@@ -33,13 +33,12 @@ public class QuickStart {
         System.out.println("Master: " + master.getLogin() + ", Slave: " + slave.getLogin());
 
         // 2. Connect to Trade Copier
-        CopierService copier = new CopierService("copy.mrpc.pro:443", "YOUR_USER_KEY", "YOUR_MANAGER_KEY");
+        CopierService copier = new CopierService("copy.mrpc.pro:443", "YOUR_USER_KEY");
 
         // 3. Start Copier
         StartRequest request = StartRequest.newBuilder()
             .setUserKey("YOUR_USER_KEY")
-            .setManagerKey("YOUR_MANAGER_KEY")
-            .setMaster(Account.newBuilder().setType("MT5").setUser(master.getLogin()).setPassword(master.getPassword()).setServer(master.getServer()).build())
+                    .setMaster(Account.newBuilder().setType("MT5").setUser(master.getLogin()).setPassword(master.getPassword()).setServer(master.getServer()).build())
             .setSlave(Account.newBuilder().setType("MT5").setUser(slave.getLogin()).setPassword(slave.getPassword()).setServer(slave.getServer()).build())
             .setRiskType("LotMultiplier")
             .setRiskValue("1.5")
