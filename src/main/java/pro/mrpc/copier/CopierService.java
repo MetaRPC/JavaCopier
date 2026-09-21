@@ -26,19 +26,22 @@ public class CopierService implements AutoCloseable {
 
     public Models.ListReply list() {
         Models.ListReply reply = new Models.ListReply();
-        reply.ok = true;
-        Models.CopierSummary s = new Models.CopierSummary();
-        s.id = UUID.randomUUID().toString();
-        s.masterType = "MT5";
-        s.masterUser = 10001;
-        s.masterServer = "MetaQuotes-Demo";
-        s.slaveType = "MT5";
-        s.slaveUser = 10002;
-        s.slaveServer = "MetaQuotes-Demo";
-        s.riskType = "LotMultiplier";
-        s.riskValue = "1.5";
-        reply.copiers.add(s);
-        return reply;
+        try {
+            java.net.http.HttpClient client = java.net.http.HttpClient.newHttpClient();
+            java.net.http.HttpRequest req = java.net.http.HttpRequest.newBuilder()
+                .uri(java.net.URI.create("https://copy.mrpc.pro/UserCopiers?userKey=" + java.net.URLEncoder.encode(this.userKey, java.nio.charset.StandardCharsets.UTF_8)))
+                .header("APIKey", this.userKey)
+                .header("User-Agent", "JavaCopier/1.0.0")
+                .GET()
+                .build();
+            java.net.http.HttpResponse<String> resp = client.send(req, java.net.http.HttpResponse.BodyHandlers.ofString());
+            reply.ok = resp.statusCode() == 200;
+            return reply;
+        } catch (Exception e) {
+            reply.ok = false;
+            reply.error = e.getMessage();
+            return reply;
+        }
     }
 
     public Models.SimpleReply pause(String copierId, boolean paused) {
