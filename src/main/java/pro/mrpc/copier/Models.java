@@ -10,6 +10,7 @@ public class Models {
         public String password = "";
         public String server = "";
         public String name = "";
+        public String id = "";
     }
 
     public static class StartRequest {

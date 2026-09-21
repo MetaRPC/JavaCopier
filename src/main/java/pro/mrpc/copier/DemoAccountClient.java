@@ -103,6 +103,92 @@ public class DemoAccountClient {
         return rep;
     }
 
+    public static String toHyphenGuid(String guid) {
+        String clean = guid.replace("mt5_live_", "").replace("-", "");
+        if (clean.length() < 32) return guid;
+        return clean.substring(0, 8) + "-" +
+               clean.substring(8, 12) + "-" +
+               clean.substring(12, 16) + "-" +
+               clean.substring(16, 20) + "-" +
+               clean.substring(20, 32);
+    }
+
+    public static class PositionInfo {
+        public long ticket;
+        public String symbol;
+        public double volume;
+        public String type;
+    }
+
+    public long orderSend(String terminalId, String symbol, String operation, double volume, String apiKey) throws Exception {
+        String url = endpoint + "/OrderSend?id=" + URLEncoder.encode(terminalId, StandardCharsets.UTF_8)
+                + "&symbol=" + URLEncoder.encode(symbol, StandardCharsets.UTF_8)
+                + "&operation=" + URLEncoder.encode(operation, StandardCharsets.UTF_8)
+                + "&volume=" + volume;
+        HttpRequest req = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .header("APIKey", apiKey)
+                .header("id", terminalId)
+                .header("User-Agent", "JavaCopier/1.0.0")
+                .timeout(Duration.ofSeconds(30))
+                .GET()
+                .build();
+        HttpResponse<String> resp = http.send(req, HttpResponse.BodyHandlers.ofString());
+        if (resp.statusCode() != 200) {
+            throw new RuntimeException("OrderSend failed with HTTP " + resp.statusCode() + ": " + resp.body());
+        }
+        String body = resp.body();
+        String ord = extractJsonNumber(body, "order");
+        if (ord.isEmpty()) ord = extractJsonNumber(body, "ticket");
+        return ord.isEmpty() ? 0 : Long.parseLong(ord);
+    }
+
+    public java.util.List<PositionInfo> openedOrders(String terminalId, String apiKey) throws Exception {
+        String url = endpoint + "/OpenedOrders?id=" + URLEncoder.encode(terminalId, StandardCharsets.UTF_8);
+        HttpRequest req = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .header("APIKey", apiKey)
+                .header("id", terminalId)
+                .header("User-Agent", "JavaCopier/1.0.0")
+                .timeout(Duration.ofSeconds(30))
+                .GET()
+                .build();
+        HttpResponse<String> resp = http.send(req, HttpResponse.BodyHandlers.ofString());
+        if (resp.statusCode() != 200) {
+            throw new RuntimeException("OpenedOrders failed with HTTP " + resp.statusCode() + ": " + resp.body());
+        }
+        String body = resp.body();
+        java.util.List<PositionInfo> list = new java.util.ArrayList<>();
+        Pattern p = Pattern.compile("\"ticket\"\\s*:\\s*([0-9]+)");
+        Matcher m = p.matcher(body);
+        while (m.find()) {
+            PositionInfo info = new PositionInfo();
+            info.ticket = Long.parseLong(m.group(1));
+            info.symbol = extractJsonString(body, "symbol");
+            info.type = extractJsonString(body, "type");
+            list.add(info);
+        }
+        return list;
+    }
+
+    public String orderClose(String terminalId, long ticket, String apiKey) throws Exception {
+        String url = endpoint + "/OrderClose?id=" + URLEncoder.encode(terminalId, StandardCharsets.UTF_8)
+                + "&ticket=" + ticket + "&volume=0&slippage=20";
+        HttpRequest req = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .header("APIKey", apiKey)
+                .header("id", terminalId)
+                .header("User-Agent", "JavaCopier/1.0.0")
+                .timeout(Duration.ofSeconds(30))
+                .GET()
+                .build();
+        HttpResponse<String> resp = http.send(req, HttpResponse.BodyHandlers.ofString());
+        if (resp.statusCode() != 200) {
+            throw new RuntimeException("OrderClose failed with HTTP " + resp.statusCode() + ": " + resp.body());
+        }
+        return resp.body();
+    }
+
     private static String extractJsonString(String json, String key) {
         Pattern p = Pattern.compile("\"" + key + "\"\\s*:\\s*\"([^\"]*)\"");
         Matcher m = p.matcher(json);
