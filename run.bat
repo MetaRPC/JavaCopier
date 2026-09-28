@@ -18,11 +18,16 @@ if exist "C:\Tools\jdk17\jdk-17.0.10+7\bin\javac.exe" (
 
 if not exist "%~dp0bin" mkdir "%~dp0bin"
 
+dir /b /s "%~dp0src\main\java\*.java" "%~dp0examples\*.java" > "%~dp0sources.txt"
+
 echo Compiling JavaCopier...
-"%JAVAC_BIN%" -d "%~dp0bin" "%~dp0src\main\java\pro\mrpc\copier\*.java" "%~dp0examples\QuickStart.java"
-if errorlevel 1 (
+"%JAVAC_BIN%" -d "%~dp0bin" @"%~dp0sources.txt"
+set "ERR=%ERRORLEVEL%"
+if exist "%~dp0sources.txt" del "%~dp0sources.txt"
+
+if not "%ERR%"=="0" (
     echo Compilation failed!
-    exit /b 1
+    exit /b %ERR%
 )
 
 echo Running JavaCopier QuickStart...
