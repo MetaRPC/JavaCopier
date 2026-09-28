@@ -124,7 +124,7 @@ public class QuickStart {
             System.out.println("\n[9] Disconnecting terminal sessions cleanly via /Disconnect...");
             if (masterGuid != null) {
                 try {
-                    DemoAccountClient.DisconnectReply discM = demo.disconnect(masterGuid, apiKey);
+                    DemoAccountClient.DisconnectReply discM = demo.disconnect(masterGuid, apiKey, true);
                     System.out.println("    Master Terminal Cleanly Disconnected: " + discM.uniqueIdentifier + " (Lifetime: " + discM.fullLifeTimeSeconds + "s)");
                 } catch (Exception ex) {
                     System.out.println("    Master disconnect error: " + ex.getMessage());
@@ -132,7 +132,7 @@ public class QuickStart {
             }
             if (slaveGuid != null) {
                 try {
-                    DemoAccountClient.DisconnectReply discS = demo.disconnect(slaveGuid, apiKey);
+                    DemoAccountClient.DisconnectReply discS = demo.disconnect(slaveGuid, apiKey, true);
                     System.out.println("    Slave Terminal Cleanly Disconnected:  " + discS.uniqueIdentifier + " (Lifetime: " + discS.fullLifeTimeSeconds + "s)");
                 } catch (Exception ex) {
                     System.out.println("    Slave disconnect error: " + ex.getMessage());

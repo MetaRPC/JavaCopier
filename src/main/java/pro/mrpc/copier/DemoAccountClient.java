@@ -82,15 +82,22 @@ public class DemoAccountClient {
     }
 
     public DisconnectReply disconnect(String terminalId, String apiKey) throws Exception {
-        String url = endpoint + "/Disconnect";
-        HttpRequest req = HttpRequest.newBuilder()
+        return disconnect(terminalId, apiKey, false);
+    }
+
+    public DisconnectReply disconnect(String terminalId, String apiKey, boolean delete) throws Exception {
+        String url = endpoint + "/Disconnect?delete=" + delete;
+        HttpRequest.Builder reqBuilder = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .header("APIKey", apiKey)
                 .header("id", terminalId)
                 .header("User-Agent", "JavaCopier/1.0.0")
                 .timeout(Duration.ofSeconds(60))
-                .GET()
-                .build();
+                .GET();
+        if (delete) {
+            reqBuilder.header("delete", "true");
+        }
+        HttpRequest req = reqBuilder.build();
         HttpResponse<String> resp = http.send(req, HttpResponse.BodyHandlers.ofString());
         if (resp.statusCode() != 200) {
             throw new RuntimeException("Disconnect failed with HTTP " + resp.statusCode() + ": " + resp.body());
