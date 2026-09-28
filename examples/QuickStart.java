@@ -4,7 +4,8 @@ import java.util.List;
 public class QuickStart {
     public static void main(String[] args) {
         System.out.println("=== MetaRPC JavaCopier Trade Replication Quick Start ===");
-        String apiKey = "TRIAL";
+        String envKey = System.getenv("MRPC_API_KEY");
+        String apiKey = (args.length > 0) ? args[0] : (envKey != null && !envKey.isEmpty() ? envKey : "TRIAL");
         DemoAccountClient demo = new DemoAccountClient("https://mt5.mrpc.pro");
         String masterGuid = null;
         String slaveGuid = null;
