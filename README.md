@@ -8,7 +8,8 @@ Official Java SDK for the MetaRPC Trade Copier high-performance trade replicatio
 ## Installation
 
 ```bash
-implementation 'pro.mrpc:copier:1.0.0'
+git clone https://github.com/MetaRPC/JavaCopier.git && cd JavaCopier && mvn install -DskipTests
+# then, in your build: implementation 'pro.mrpc:copier:1.0.0'   (add mavenLocal() to repositories)
 ```
 
 ---

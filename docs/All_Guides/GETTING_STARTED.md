@@ -4,10 +4,11 @@ Welcome to **JavaCopier**, the official Java client library for MetaRPC's ultra-
 
 ## Installation
 
-Install JavaCopier using your language's package manager:
+JavaCopier is not published on Maven Central; install it as follows:
 
 ```bash
-implementation 'pro.mrpc:copier:1.0.0'
+git clone https://github.com/MetaRPC/JavaCopier.git && cd JavaCopier && mvn install -DskipTests
+# then, in your build: implementation 'pro.mrpc:copier:1.0.0'   (add mavenLocal() to repositories)
 ```
 
 ## Infrastructure Endpoints
