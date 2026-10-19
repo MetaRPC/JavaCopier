@@ -858,8 +858,9 @@
 <h1 id="getting-started-with-javacopier">Getting Started with JavaCopier<a class="headerlink" href="#getting-started-with-javacopier" title="Permanent link">¶</a></h1>
 <p>Welcome to <strong>JavaCopier</strong>, the official Java client library for MetaRPC's ultra-low latency Trade Copier engine.</p>
 <h2 id="installation">Installation<a class="headerlink" href="#installation" title="Permanent link">¶</a></h2>
-<p>Install JavaCopier using your language's package manager:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>implementation<span class="w"> </span><span class="s1">&#39;pro.mrpc:copier:1.0.0&#39;</span>
+<p>JavaCopier is not published on Maven Central; install it as follows:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/MetaRPC/JavaCopier.git<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">cd</span><span class="w"> </span>JavaCopier<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mvn<span class="w"> </span>install<span class="w"> </span>-DskipTests
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="c1"># then, in your build: implementation 'pro.mrpc:copier:1.0.0'   (add mavenLocal() to repositories)</span>
 </code></pre></div>
 <h2 id="infrastructure-endpoints">Infrastructure Endpoints<a class="headerlink" href="#infrastructure-endpoints" title="Permanent link">¶</a></h2>
 <p>MetaRPC provides dedicated production and staging environments for the Trade Copier:</p>
@@ -883,9 +884,9 @@
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Staging</strong></td>
-<td style="text-align: left;"><code>copy-stg.mrpc.pro:443</code></td>
-<td style="text-align: left;"><code>https://copy-stg.mrpc.pro</code></td>
-<td style="text-align: left;"><code>wss://copy-stg.mrpc.pro</code></td>
+<td style="text-align: left;"><code>copyback-stg.mrpc.pro:443</code></td>
+<td style="text-align: left;"><code>https://copyback-stg.mrpc.pro</code></td>
+<td style="text-align: left;"><code>wss://copyback-stg.mrpc.pro</code></td>
 <td style="text-align: left;">Integration testing &amp; demo accounts</td>
 </tr>
 </tbody>
