@@ -2,7 +2,8 @@ import pro.mrpc.copier.*;
 import java.io.*;
 public class LiveAdapter {
  static String q(String s){return "\""+(s==null?"":s.replace("\\","\\\\").replace("\"","\\\"").replace("\n","\\n").replace("\r","\\r").replace("\t","\\t"))+"\"";}
- static Models.Account account(String[] v,int i){Models.Account a=new Models.Account();a.user=Long.parseLong(v[i]);a.password=v[i+1];a.server=v[i+2];a.id=v[i+3];return a;}
+ static String platform(){String p=System.getenv("COPIER_PLATFORM");if(p==null)p="MT5";if(!p.equals("MT4")&&!p.equals("MT5"))throw new IllegalArgumentException("COPIER_PLATFORM must be MT4 or MT5");return p;}
+ static Models.Account account(String[] v,int i){Models.Account a=new Models.Account();a.type=platform();a.user=Long.parseLong(v[i]);a.password=v[i+1];a.server=v[i+2];a.id=v[i+3];return a;}
  public static void main(String[] args){try{
   BufferedReader in=new BufferedReader(new InputStreamReader(System.in));String[] v=new String[13];for(int i=0;i<13;i++){v[i]=in.readLine();if(v[i]==null)throw new Exception("Expected 13 configuration lines");}
   try(CopierService c=new CopierService("https://"+v[0],v[1])){
