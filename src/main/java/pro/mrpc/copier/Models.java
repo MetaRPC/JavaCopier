@@ -28,7 +28,7 @@ public class Models {
     }
 
     public static class StartReply {
-        public boolean ok = true;
+        public boolean ok = false;
         public String copierId = "";
         public String error = "";
     }
@@ -48,13 +48,13 @@ public class Models {
     }
 
     public static class ListReply {
-        public boolean ok = true;
+        public boolean ok = false;
         public List<CopierSummary> copiers = new ArrayList<>();
         public String error = "";
     }
 
     public static class SimpleReply {
-        public boolean ok = true;
+        public boolean ok = false;
         public String error = "";
     }
 }

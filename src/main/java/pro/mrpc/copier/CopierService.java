@@ -10,6 +10,8 @@ public class CopierService implements AutoCloseable {
     }
 
     public CopierService(String endpoint, String userKey, String managerKey) {
+        if (userKey == null || !userKey.matches("[!-~]+") || userKey.equalsIgnoreCase("TRIAL"))
+            throw new IllegalArgumentException("A real owner API key is required (printable ASCII, no whitespace).");
         this.endpoint = endpoint;
         this.userKey = userKey;
         this.managerKey = managerKey != null && !managerKey.isEmpty() ? managerKey : userKey;
@@ -18,7 +20,7 @@ public class CopierService implements AutoCloseable {
     public Models.StartReply start(Models.StartRequest request) {
         try {
             byte[] reqPayload = GrpcWire.encodeStartRequest(request, this.userKey, this.managerKey);
-            byte[] respPayload = GrpcWire.callGrpc(endpoint, "copier.CopierService", "Start", reqPayload);
+            byte[] respPayload = GrpcWire.callGrpc(endpoint, "copier.CopierService", "Start", reqPayload, this.userKey);
             return GrpcWire.decodeStartReply(respPayload);
         } catch (Exception e) {
             Models.StartReply reply = new Models.StartReply();
@@ -31,7 +33,7 @@ public class CopierService implements AutoCloseable {
     public Models.ListReply list() {
         try {
             byte[] reqPayload = GrpcWire.encodeListRequest(this.userKey);
-            byte[] respPayload = GrpcWire.callGrpc(endpoint, "copier.CopierService", "List", reqPayload);
+            byte[] respPayload = GrpcWire.callGrpc(endpoint, "copier.CopierService", "List", reqPayload, this.userKey);
             return GrpcWire.decodeListReply(respPayload);
         } catch (Exception e) {
             Models.ListReply reply = new Models.ListReply();
@@ -44,7 +46,7 @@ public class CopierService implements AutoCloseable {
     public Models.SimpleReply pause(String copierId, boolean paused) {
         try {
             byte[] reqPayload = GrpcWire.encodePauseRequest(this.userKey, copierId, paused);
-            byte[] respPayload = GrpcWire.callGrpc(endpoint, "copier.CopierService", "Pause", reqPayload);
+            byte[] respPayload = GrpcWire.callGrpc(endpoint, "copier.CopierService", "Pause", reqPayload, this.userKey);
             return GrpcWire.decodeSimpleReply(respPayload);
         } catch (Exception e) {
             Models.SimpleReply reply = new Models.SimpleReply();
@@ -57,7 +59,7 @@ public class CopierService implements AutoCloseable {
     public Models.SimpleReply remove(String copierId) {
         try {
             byte[] reqPayload = GrpcWire.encodeRemoveRequest(this.userKey, copierId);
-            byte[] respPayload = GrpcWire.callGrpc(endpoint, "copier.CopierService", "Remove", reqPayload);
+            byte[] respPayload = GrpcWire.callGrpc(endpoint, "copier.CopierService", "Remove", reqPayload, this.userKey);
             return GrpcWire.decodeSimpleReply(respPayload);
         } catch (Exception e) {
             Models.SimpleReply reply = new Models.SimpleReply();

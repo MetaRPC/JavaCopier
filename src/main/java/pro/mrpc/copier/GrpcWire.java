@@ -121,13 +121,14 @@ public class GrpcWire {
 
     public static byte[] unframeGrpc(byte[] grpcResponse) {
         if (grpcResponse == null || grpcResponse.length < 5) {
-            return new byte[0];
+            throw new IllegalArgumentException("Missing gRPC response frame");
         }
         int len = ((grpcResponse[1] & 0xFF) << 24) |
                   ((grpcResponse[2] & 0xFF) << 16) |
                   ((grpcResponse[3] & 0xFF) << 8) |
                   (grpcResponse[4] & 0xFF);
-        int actual = Math.min(len, grpcResponse.length - 5);
+        if (grpcResponse[0] != 0 || len < 0 || len != grpcResponse.length - 5) throw new IllegalArgumentException("Invalid or truncated gRPC frame");
+        int actual = len;
         byte[] payload = new byte[actual];
         System.arraycopy(grpcResponse, 5, payload, 0, actual);
         return payload;
@@ -276,70 +277,28 @@ public class GrpcWire {
         return s;
     }
 
-    public static byte[] callGrpc(String endpoint, String service, String method, byte[] protoPayload) throws Exception {
-        String base = endpoint;
-        if (!base.startsWith("http://") && !base.startsWith("https://")) {
-            base = "https://" + base;
-        }
-        if (base.endsWith("/")) {
-            base = base.substring(0, base.length() - 1);
-        }
-        URI uri = URI.create(base + "/" + service + "/" + method);
-
-        HttpClient client = HttpClient.newBuilder()
-            .version(HttpClient.Version.HTTP_2)
-            .connectTimeout(Duration.ofSeconds(30))
-            .build();
-
-        byte[] frame = frameGrpc(protoPayload);
-
-        HttpRequest request = HttpRequest.newBuilder()
-            .uri(uri)
-            .version(HttpClient.Version.HTTP_2)
-            .header("Content-Type", "application/grpc")
-            .header("User-Agent", "JavaCopier-gRPC/1.0.0")
-            .POST(HttpRequest.BodyPublishers.ofByteArray(frame))
-            .timeout(Duration.ofSeconds(180))
-            .build();
-
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        CompletableFuture<byte[]> future = new CompletableFuture<>();
-
-        HttpResponse.BodyHandler<byte[]> handler = responseInfo -> new HttpResponse.BodySubscriber<byte[]>() {
-            @Override
-            public CompletionStage<byte[]> getBody() {
-                return future;
-            }
-
-            @Override
-            public void onSubscribe(Flow.Subscription subscription) {
-                subscription.request(Long.MAX_VALUE);
-            }
-
-            @Override
-            public void onNext(List<ByteBuffer> item) {
-                for (ByteBuffer b : item) {
-                    byte[] buf = new byte[b.remaining()];
-                    b.get(buf);
-                    baos.write(buf, 0, buf.length);
+    // grpc-java handles HTTP/2 framing, trailers, TLS verification and deadlines.
+    public static byte[] callGrpc(String endpoint, String service, String method, byte[] payload, String apiKey) throws Exception {
+        URI uri = URI.create(endpoint.contains("://") ? endpoint : "https://" + endpoint);
+        if (!"https".equals(uri.getScheme()) || uri.getHost() == null)
+            throw new IllegalArgumentException("Use a TLS (https) copier endpoint.");
+        io.grpc.ManagedChannel channel = io.grpc.ManagedChannelBuilder.forAddress(uri.getHost(), uri.getPort() < 0 ? 443 : uri.getPort()).useTransportSecurity().build();
+        try {
+            io.grpc.Metadata metadata = new io.grpc.Metadata();
+            metadata.put(io.grpc.Metadata.Key.of("apikey", io.grpc.Metadata.ASCII_STRING_MARSHALLER), apiKey);
+            io.grpc.Channel authenticated = io.grpc.ClientInterceptors.intercept(channel, io.grpc.stub.MetadataUtils.newAttachHeadersInterceptor(metadata));
+            io.grpc.MethodDescriptor.Marshaller<byte[]> bytes = new io.grpc.MethodDescriptor.Marshaller<byte[]>() {
+                public InputStream stream(byte[] value) { return new ByteArrayInputStream(value); }
+                public byte[] parse(InputStream input) {
+                    try { return input.readAllBytes(); }
+                    catch (IOException e) { throw new java.io.UncheckedIOException(e); }
                 }
-            }
-
-            @Override
-            public void onError(Throwable throwable) {
-                future.complete(baos.toByteArray());
-            }
-
-            @Override
-            public void onComplete() {
-                future.complete(baos.toByteArray());
-            }
-        };
-
-        HttpResponse<byte[]> response = client.send(request, handler);
-        if (response.statusCode() != 200) {
-            throw new IOException("gRPC HTTP transport error: HTTP " + response.statusCode());
-        }
-        return unframeGrpc(response.body());
+            };
+            io.grpc.MethodDescriptor<byte[], byte[]> descriptor = io.grpc.MethodDescriptor.<byte[], byte[]>newBuilder()
+                .setType(io.grpc.MethodDescriptor.MethodType.UNARY).setFullMethodName(service + "/" + method)
+                .setRequestMarshaller(bytes).setResponseMarshaller(bytes).build();
+            return io.grpc.stub.ClientCalls.blockingUnaryCall(authenticated, descriptor,
+                io.grpc.CallOptions.DEFAULT.withDeadlineAfter(180, java.util.concurrent.TimeUnit.SECONDS), payload);
+        } finally { channel.shutdownNow(); }
     }
 }

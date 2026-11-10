@@ -1,66 +1,37 @@
-# JavaCopier
+# MetaRPC Java Trade Copier SDK
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![Docs](https://img.shields.io/badge/docs-online-green.svg)](https://github.com/MetaRPC/JavaCopier/tree/main/docs)
+Authenticate, configure a master–follower relationship, inspect its state, pause and remove it.
 
-Official Java SDK for the MetaRPC Trade Copier high-performance trade replication engine via gRPC (`copy.mrpc.pro:443`).
+**[Documentation](https://metarpc.github.io/JavaCopier/) · [Quickstart](https://metarpc.github.io/JavaCopier/quickstart/) · [Authentication](https://metarpc.github.io/JavaCopier/authentication/) · [API reference](https://metarpc.github.io/JavaCopier/reference/)**
 
-## Installation
+## Install from source
 
-```bash
-git clone https://github.com/MetaRPC/JavaCopier.git && cd JavaCopier && mvn install -DskipTests
-# then, in your build: implementation 'pro.mrpc:copier:1.0.0'   (add mavenLocal() to repositories)
-```
+Requires JDK 11+ and Maven 3.8+.
 
----
-
-## 🏃 How to Run Examples
-
-### 1. Clone Repo
 ```bash
 git clone https://github.com/MetaRPC/JavaCopier.git
 cd JavaCopier
+mvn test
+mvn dependency:copy-dependencies
+javac -cp "target/classes" -d target/examples examples/ListCopiers.java
 ```
 
-### 2. Run with Default TRIAL Key
+## First request
+
+Set `MRPC_API_KEY` to your real owner API key in your environment, then run:
+
 ```bash
-# Using helper script on Windows:
-.\run.bat
-
-# Or directly with javac/java (Linux / macOS / Windows):
-javac -d bin $(find src/main/java examples -name "*.java")
-java -cp bin QuickStart
+java -cp "target/examples:target/classes:target/dependency/*" ListCopiers
 ```
 
-### 3. Run with Your Own API Key
+This List example is read-only: no account creation or trades. Java on Windows uses `;` instead of `:` in classpaths.
 
-Pass your API key directly as an argument:
-```bash
-# Windows
-.\run.bat <YOUR_API_KEY>
+## Authentication
 
-# Cross-platform
-java -cp bin QuickStart <YOUR_API_KEY>
-```
+Every SDK call sends `ApiKey` (`apikey` in gRPC metadata). The gRPC body also carries `user_key`; the header does not replace it. `TRIAL` is not an owner key. Read the [verified transport contract](https://metarpc.github.io/JavaCopier/authentication/).
 
-Or set the `MRPC_API_KEY` environment variable:
-```bash
-# Linux / macOS
-export MRPC_API_KEY="<YOUR_API_KEY>"
-java -cp bin QuickStart
+## Scope and verification
 
-# Windows PowerShell
-$env:MRPC_API_KEY="<YOUR_API_KEY>"
-.\run.bat
+Core operations: start · list · pause · remove. Advanced server features are distinguished from the supported wrapper surface. Review legacy replication examples before using them with disposable demos. Standard tests need no broker credentials.
 
-# Windows CMD
-set MRPC_API_KEY=<YOUR_API_KEY>
-run.bat
-```
-
----
-
-## Quick Start
-
-See [Quick Start Documentation](https://github.com/MetaRPC/JavaCopier/blob/main/docs/All_Guides/Your_First_Project.md) for a 10-minute walkthrough.
-
+See [testing and contributing](https://metarpc.github.io/JavaCopier/testing/) for the regression suite, demo checklist and Pages build. Edit `docs/`; generated `site/` output is not source.
