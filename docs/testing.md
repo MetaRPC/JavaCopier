@@ -27,3 +27,11 @@ python tools/check_docs.py
 ```
 
 GitHub Actions validates changes and publishes Pages only from a passing build on `main`. Documentation builds require no API key. When changing a method, update its example, reference and regression test together. Do not claim broker integration passed on the strength of mocks.
+
+## Run this SDK’s regression suite
+
+```bash
+mvn test
+```
+
+The November 10 audit passed the SDK build/tests and strict documentation/link checks in GitHub Actions. Tests cover the implemented transport, key validation and relevant regression cases; they are not a claim that live broker replication was performed.

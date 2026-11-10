@@ -20,6 +20,7 @@ jobs:
           cache: maven
       - run: mvn -B test
       - run: javac -cp target/classes -d target/examples examples/ListCopiers.java
+      - run: javac -cp target/classes -d target/examples examples/QuickStart.java
 
   docs:
     runs-on: ubuntu-latest

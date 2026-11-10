@@ -14,7 +14,7 @@ mvn dependency:copy-dependencies
 javac -cp "target/classes" -d target/examples examples/ListCopiers.java
 ```
 
-Java on Windows uses `;` for classpath separators. Run C++ builds in a Visual Studio developer shell. Activate your Python virtual environment before installing.
+On Windows use `;` instead of `:` in Java classpaths.
 
 ## 2. Set your owner key
 

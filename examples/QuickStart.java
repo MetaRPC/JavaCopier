@@ -4,8 +4,9 @@ import java.util.List;
 public class QuickStart {
     public static void main(String[] args) {
         System.out.println("=== MetaRPC JavaCopier Trade Replication Quick Start ===");
+        if (!"1".equals(System.getenv("MRPC_LIVE_TESTS"))) throw new IllegalStateException("Set MRPC_LIVE_TESTS=1 explicitly to run demo trading");
         String envKey = System.getenv("MRPC_API_KEY");
-        String apiKey = (args.length > 0) ? args[0] : (envKey != null && !envKey.isEmpty() ? envKey : "TRIAL");
+        String apiKey = (args.length > 0) ? args[0] : (envKey != null && !envKey.isEmpty() ? envKey : "");
         DemoAccountClient demo = new DemoAccountClient("https://mt5.mrpc.pro");
         String masterGuid = null;
         String slaveGuid = null;
@@ -23,7 +24,7 @@ public class QuickStart {
             Thread.sleep(1000);
 
             // 2. Connect terminals via ConnectEx with APIKey: TRIAL
-            System.out.println("\n[2] Connecting terminals via ConnectEx (APIKey: " + apiKey + ")...");
+            System.out.println("\n[2] Connecting terminals via ConnectEx (authenticated)...");
             DemoAccountClient.ConnectExReply connM = demo.connectEx(master.login, master.password, master.server, apiKey);
             masterGuid = connM.terminalInstanceGuid;
             System.out.println("    Master Terminal Connected! GUID: " + masterGuid);
