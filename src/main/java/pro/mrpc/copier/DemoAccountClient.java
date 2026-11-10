@@ -1,5 +1,6 @@
 package pro.mrpc.copier;
 
+import com.google.gson.*;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
@@ -49,9 +50,9 @@ public class DemoAccountClient {
                 .build();
         HttpResponse<String> resp = http.send(req, HttpResponse.BodyHandlers.ofString());
         if (resp.statusCode() != 200) {
-            throw new RuntimeException("DemoAccount/Open failed with HTTP " + resp.statusCode() + ": " + resp.body());
+            throw new RuntimeException("DemoAccount/Open failed with HTTP " + resp.statusCode());
         }
-        String body = resp.body();
+        String body = checkedBody(resp.body());
         DemoReply rep = new DemoReply();
         rep.login = Long.parseLong(extractJsonString(body, "login"));
         rep.password = extractJsonString(body, "password");
@@ -73,9 +74,9 @@ public class DemoAccountClient {
                 .build();
         HttpResponse<String> resp = http.send(req, HttpResponse.BodyHandlers.ofString());
         if (resp.statusCode() != 200) {
-            throw new RuntimeException("ConnectEx failed with HTTP " + resp.statusCode() + ": " + resp.body());
+            throw new RuntimeException("ConnectEx failed with HTTP " + resp.statusCode());
         }
-        String body = resp.body();
+        String body = checkedBody(resp.body());
         ConnectExReply rep = new ConnectExReply();
         rep.terminalInstanceGuid = extractJsonString(body, "terminalInstanceGuid");
         return rep;
@@ -100,9 +101,9 @@ public class DemoAccountClient {
         HttpRequest req = reqBuilder.build();
         HttpResponse<String> resp = http.send(req, HttpResponse.BodyHandlers.ofString());
         if (resp.statusCode() != 200) {
-            throw new RuntimeException("Disconnect failed with HTTP " + resp.statusCode() + ": " + resp.body());
+            throw new RuntimeException("Disconnect failed with HTTP " + resp.statusCode());
         }
-        String body = resp.body();
+        String body = checkedBody(resp.body());
         DisconnectReply rep = new DisconnectReply();
         rep.uniqueIdentifier = extractJsonString(body, "uniqueIdentifier");
         String lt = extractJsonNumber(body, "fullLifeTimeSeconds");
@@ -142,9 +143,9 @@ public class DemoAccountClient {
                 .build();
         HttpResponse<String> resp = http.send(req, HttpResponse.BodyHandlers.ofString());
         if (resp.statusCode() != 200) {
-            throw new RuntimeException("OrderSend failed with HTTP " + resp.statusCode() + ": " + resp.body());
+            throw new RuntimeException("OrderSend failed with HTTP " + resp.statusCode());
         }
-        String body = resp.body();
+        String body = checkedBody(resp.body());
         String ord = extractJsonNumber(body, "order");
         if (ord.isEmpty()) ord = extractJsonNumber(body, "ticket");
         return ord.isEmpty() ? 0 : Long.parseLong(ord);
@@ -162,17 +163,27 @@ public class DemoAccountClient {
                 .build();
         HttpResponse<String> resp = http.send(req, HttpResponse.BodyHandlers.ofString());
         if (resp.statusCode() != 200) {
-            throw new RuntimeException("OpenedOrders failed with HTTP " + resp.statusCode() + ": " + resp.body());
+            throw new RuntimeException("OpenedOrders failed with HTTP " + resp.statusCode());
         }
-        String body = resp.body();
+        String body = checkedBody(resp.body());
+        return parsePositions(body);
+    }
+
+    static java.util.List<PositionInfo> parsePositions(String body) {
+        checkedBody(body);
         java.util.List<PositionInfo> list = new java.util.ArrayList<>();
-        Pattern p = Pattern.compile("\"ticket\"\\s*:\\s*([0-9]+)");
-        Matcher m = p.matcher(body);
-        while (m.find()) {
+        JsonObject root = JsonParser.parseString(body).getAsJsonObject();
+        JsonObject data = root.getAsJsonObject("data");
+        if (data == null || !data.has("positionInfos")) throw new IllegalStateException("OpenedOrders missing positionInfos");
+        JsonElement rows = data.get("positionInfos");
+        if (rows.isJsonNull()) return list;
+        for (JsonElement row : rows.getAsJsonArray()) {
+            JsonObject item = row.getAsJsonObject();
             PositionInfo info = new PositionInfo();
-            info.ticket = Long.parseLong(m.group(1));
-            info.symbol = extractJsonString(body, "symbol");
-            info.type = extractJsonString(body, "type");
+            info.ticket = item.get("ticket").getAsLong();
+            info.symbol = item.get("symbol").getAsString();
+            info.volume = item.get("volume").getAsDouble();
+            info.type = item.get("type").getAsString();
             list.add(info);
         }
         return list;
@@ -191,20 +202,27 @@ public class DemoAccountClient {
                 .build();
         HttpResponse<String> resp = http.send(req, HttpResponse.BodyHandlers.ofString());
         if (resp.statusCode() != 200) {
-            throw new RuntimeException("OrderClose failed with HTTP " + resp.statusCode() + ": " + resp.body());
+            throw new RuntimeException("OrderClose failed with HTTP " + resp.statusCode());
         }
-        return resp.body();
+        return checkedBody(resp.body());
     }
 
-    private static String extractJsonString(String json, String key) {
-        Pattern p = Pattern.compile("\"" + key + "\"\\s*:\\s*\"([^\"]*)\"");
-        Matcher m = p.matcher(json);
-        return m.find() ? m.group(1) : "";
+    static String checkedBody(String body) {
+        JsonObject root = JsonParser.parseString(body).getAsJsonObject();
+        JsonElement error = root.get("error");
+        if (error != null && !error.isJsonNull() && !error.equals(new JsonPrimitive(false))) {
+            String code = "API_ERROR";
+            if (error.isJsonObject() && error.getAsJsonObject().has("errorCode")) code = error.getAsJsonObject().get("errorCode").getAsString();
+            throw new IllegalStateException("MRPC request failed: " + code);
+        }
+        return body;
     }
 
-    private static String extractJsonNumber(String json, String key) {
-        Pattern p = Pattern.compile("\"" + key + "\"\\s*:\\s*([0-9]+)");
-        Matcher m = p.matcher(json);
-        return m.find() ? m.group(1) : "";
+    private static String extractJsonString(String body, String key) {
+        JsonObject root = JsonParser.parseString(body).getAsJsonObject();
+        JsonObject data = root.has("data") && root.get("data").isJsonObject() ? root.getAsJsonObject("data") : root;
+        JsonElement value = data.get(key);
+        return value == null || value.isJsonNull() ? "" : value.getAsString();
     }
+    private static String extractJsonNumber(String body, String key) { return extractJsonString(body, key); }
 }

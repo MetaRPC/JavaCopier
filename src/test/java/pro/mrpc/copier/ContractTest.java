@@ -3,6 +3,17 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 import java.io.*;
 public class ContractTest {
+ @Test void parsesEveryPositionIndependently() {
+   String body="{\"data\":{\"positionInfos\":[{\"ticket\":9007199254740993,\"symbol\":\"EURUSD\",\"type\":\"BUY\",\"volume\":0.02},{\"ticket\":\"9007199254740994\",\"symbol\":\"GBPUSD\",\"type\":\"SELL\",\"volume\":0.03}]}}";
+   var rows=DemoAccountClient.parsePositions(body);
+   assertEquals(2, rows.size());
+   assertEquals(9007199254740993L, rows.get(0).ticket);
+   assertEquals(9007199254740994L, rows.get(1).ticket);
+   assertEquals("GBPUSD", rows.get(1).symbol);
+   assertEquals("SELL", rows.get(1).type);
+   assertEquals(0.03, rows.get(1).volume);
+   assertThrows(RuntimeException.class,()->DemoAccountClient.parsePositions("{\"data\":{}}"));
+ }
  @Test void falseRepliesStayFalse() {
    assertFalse(GrpcWire.decodeStartReply(new byte[0]).ok);
    assertFalse(GrpcWire.decodeListReply(new byte[0]).ok);
@@ -26,5 +37,12 @@ public class ContractTest {
    Models.StartRequest req=new Models.StartRequest();req.riskType="FixedLot";req.riskValue="0.01";req.copySl=false;req.copyTp=true;
    String bytes=new String(GrpcWire.encodeStartRequest(req,"owner-test","manager-test"),java.nio.charset.StandardCharsets.UTF_8);
    assertTrue(bytes.contains("owner-test"));assertTrue(bytes.contains("manager-test"));assertTrue(bytes.contains("FixedLot"));assertTrue(bytes.contains("0.01"));
+ }
+ @Test void terminalErrorsCannotBecomeEmptySuccess() {
+   String body="{\"error\":{\"errorCode\":\"MAX_TERMINALS_PER_POD_REACHED\",\"stackTrace\":\"private trace\"}}";
+   Exception error=assertThrows(IllegalStateException.class,()->DemoAccountClient.checkedBody(body));
+   assertTrue(error.getMessage().contains("MAX_TERMINALS_PER_POD_REACHED"));
+   assertFalse(error.getMessage().contains("private trace"));
+   assertDoesNotThrow(()->DemoAccountClient.checkedBody("{\"data\":{\"positionInfos\":[]}}"));
  }
 }
